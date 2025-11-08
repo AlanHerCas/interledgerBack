@@ -42,5 +42,15 @@ const userSchema = {
     
 };
 
+class User extends Model {
+    static config (sequelize) {
+        return {
+            sequelize,
+            tableName: USER_VARIABLE,
+            modelName: 'User',
+            timestamps: false
+        };
+    }
+}
 
-module.exports = {USER_VARIABLE, userSchema};
+module.exports = {USER_VARIABLE, userSchema, User};
