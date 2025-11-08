@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8
+    container_name: hackInt
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hacInt
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadminhackmty
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+
+volumes:
+  db_data:
