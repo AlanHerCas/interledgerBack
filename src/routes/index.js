@@ -1,7 +1,7 @@
 const express = require('express');
 const authRouter = require('./auth.routes');
 const interledgerRouter = require('./interledger.routes');
-router.use('/business', businessRouter);
+const businessRouter = require('./business.routes');
 
 function routerApi(app) {
     const router = express.Router();
