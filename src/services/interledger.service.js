@@ -1,3 +1,5 @@
+const { models } = require('../libs/sequlize');
+
 // src/services/interledgerService.js
 import { createAuthenticatedClient } from '@interledger/open-payments';
 
@@ -36,3 +38,28 @@ export async function initReceiverClient() {
   console.log('✅ Cliente receptor ILP inicializado');
   return receiverClient;
 }
+
+class InterledgerService {
+
+    async createTransaction (transaction) {
+        const transactionCreated = await models.Transaction.create(transaction);
+        console.log (transactionCreated);
+        return transactionCreated;
+    }
+    async finAll() {
+        const transactions = await models.Transaction.findAll();
+        console.log (transactions);
+        return transactions;
+    }
+    async findById (id) {
+        const transaction = await models.Transaction.findOne({ 
+            where: {
+                id_transaction: id
+            }
+        });
+        console.log (transaction);
+        return transaction;
+    }
+}
+
+module.exports = InterledgerService;
