@@ -66,59 +66,31 @@ async function createClient() {
 // POST /api/interledger/grants/incoming
 async function requestIncomingGrant(req, res) {
   try {
-    const receiverUrl = req.body.walletUrl || process.env.receiver;
+    const receiverUrl = req.body.receiverUrl || process.env.receiver;
     const client = await createClient();
+
     const grant = await client.grant.request(
-      { url: receiverUrl + "" },
+      { url: receiverUrl },
       {
         access_token: {
           access: [{ type: "incoming-payment", actions: ["create"] }],
         },
       }
     );
+
     const id = makeId("g_");
     store.grants[id] = grant;
     res.json({
       id,
       finalized: isFinalizedGrant(grant),
-      grant: {
-        interact: grant.interact,
-        continue: grant.continue,
-        access_token: grant.access_token,
-      },
+      grant,
     });
   } catch (err) {
-    // Log full error server-side for debugging (includes stack and structured details)
-    console.error(
-      "requestIncomingGrant error (stack):",
-      err && err.stack ? err.stack : err
-    );
-    // The OpenPaymentsClientError thrown by the library includes structured fields
-    if (err && typeof err === "object") {
-      console.error("error.message:", err.message);
-      if ("description" in err)
-        console.error("error.description:", err.description);
-      if ("status" in err) console.error("error.status:", err.status);
-      if ("code" in err) console.error("error.code:", err.code);
-      if ("details" in err) console.error("error.details:", err.details);
-    }
-    // Some errors may include an underlying response (from HTTP client)
-    if (err && err.response) {
-      try {
-        console.error("response status:", err.response.status);
-        console.error("response data:", JSON.stringify(err.response.data));
-      } catch (e) {
-        console.error("error reading err.response:", e);
-      }
-    }
-    // Return a concise error message to the client
-    res
-      .status(500)
-      .json({
-        error: err.message || "Error making Open Payments POST request",
-      });
+    console.error("requestIncomingGrant error:", err);
+    res.status(500).json({ error: err.message });
   }
 }
+
 
 // GET /api/interledger/wallets
 async function getWalletAddresses(req, res) {
@@ -141,44 +113,43 @@ async function getWalletAddresses(req, res) {
 }
 
 // POST /api/interledger/incoming-payments
+// POST /api/interledger/incoming-payments
 async function createIncomingPayment(req, res) {
   try {
-    const { grantId, walletAddress, amount, incomingAmount } = req.body;
+    const { grantId, receiverUrl, amount } = req.body;
     const grant = store.grants[grantId];
     if (!grant) return res.status(404).json({ error: "grant not found" });
+
     const client = await createClient();
-    // Determine the incoming amount value. Accept either:
-    // - incomingAmount: { value: '123', assetCode, assetScale }
-    // - amount: numeric (e.g. 100)
-    let valueStr;
-    if (incomingAmount && typeof incomingAmount.value !== 'undefined') {
-      // If incomingAmount.value provided, accept only digits string
-      if (typeof incomingAmount.value !== 'string' || !/^[0-9]+$/.test(incomingAmount.value)) {
-        return res.status(400).json({ error: 'incomingAmount.value must be a string of digits (uint64)' });
-      }
-      valueStr = incomingAmount.value;
-    } else if (typeof amount !== 'undefined') {
-      // Accept number or numeric string
-      if (typeof amount === 'number') {
-        if (!Number.isInteger(amount) || amount < 0) return res.status(400).json({ error: 'amount must be a non-negative integer' });
-        valueStr = String(amount);
-      } else if (typeof amount === 'string' && /^[0-9]+$/.test(amount)) {
-        valueStr = amount;
-      } else {
-        return res.status(400).json({ error: 'amount must be an integer or numeric string' });
-      }
-    } else {
-      valueStr = '100';
+    
+    // Obtener datos de la wallet receptora
+    const receiverWallet = await client.walletAddress.get({ url: receiverUrl });
+
+    // Validar monto (en entero string)
+    const valueStr = String(parseInt(amount, 10));
+    if (isNaN(valueStr) || parseInt(valueStr) <= 0) {
+      return res.status(400).json({ error: "Invalid amount" });
     }
 
-    const incoming = await client.incomingPayment.create({ url: walletAddress.resourceServer, accessToken: grant.access_token.value }, {
-      walletAddress: walletAddress.id,
-      incomingAmount: { assetCode: walletAddress.assetCode, assetScale: walletAddress.assetScale, value: valueStr }
+    // Crear el pago entrante (incoming payment)
+    const incoming = await client.incomingPayment.create({
+      url: receiverWallet.resourceServer,
+      accessToken: grant.access_token.value
+    }, {
+      walletAddress: receiverWallet.id,
+      incomingAmount: {
+        assetCode: receiverWallet.assetCode,
+        assetScale: receiverWallet.assetScale,
+        value: valueStr
+      }
     });
+
     const id = makeId('ip_');
     store.incomingPayments[id] = incoming;
+
     res.json({ id, incoming });
   } catch (err) {
+    console.error("createIncomingPayment error:", err);
     res.status(500).json({ error: err.message });
   }
 }

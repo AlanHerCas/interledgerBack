@@ -160,11 +160,10 @@ const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la 
     console.log('Permiso (grant) para pago saliente obtenido:', outgoingPaymentGrant);
 
 
-    // ==== 8️⃣ INTERACCIÓN DEL USUARIO ====
-    // Se pausa el programa hasta que el usuario presione Enter
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    await rl.question('Presiona Enter para continuar con el pago... ');
-    rl.close();
+    // ==== 8️⃣ INTERACCIÓN (AUTO) ====
+    // Esperar automáticamente 10 segundos antes de continuar (simula aprobación automática)
+    console.log('Esperando 10 segundos antes de intentar continuar el grant automáticamente...');
+    await new Promise((resolve) => setTimeout(resolve, 50000));
 
 
     // ==== 9️⃣ FINALIZAR EL GRANT DEL PAGO SALIENTE ====
