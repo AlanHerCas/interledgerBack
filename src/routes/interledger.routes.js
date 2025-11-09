@@ -10,6 +10,11 @@ router.post('/quotes', controller.createQuote);
 router.post('/grants/outgoing', controller.requestOutgoingGrant);
 router.post('/grants/:id/continue', controller.continueGrant);
 router.post('/outgoing-payments', controller.createOutgoingPayment);
+
+router.get('/outgoing-payments', controller.listOutgoingPayments);
+router.get('/incoming-payments', controller.listIncomingPayments);
+
+
 // Wallet helper
 router.get('/wallets', controller.getWalletAddresses);
 

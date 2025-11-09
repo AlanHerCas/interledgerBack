@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
 
-// Middlewares
+// Middlewares para
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
