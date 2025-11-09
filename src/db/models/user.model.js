@@ -46,6 +46,11 @@ const userSchema = {
     key_url: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    saldo: {
+        type: DataTypes.DECIMAL(20, 8),
+        allowNull: false,
+        defaultValue: 0.0
     }
 };
 
