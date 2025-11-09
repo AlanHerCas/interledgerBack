@@ -1,5 +1,4 @@
 const {DataTypes, Model }= require('sequelize');
-const { convertCurrency } = require('../../services/currencly.service');
 
 const TRANSACTION_VARIABLE = 'transaction';
 

@@ -1,4 +1,4 @@
-const { models } = require('../libs/sequlize');
+const { models } = require('../libs/sequelize');
 
 // src/services/interledgerService.js
 import { createAuthenticatedClient } from '@interledger/open-payments';

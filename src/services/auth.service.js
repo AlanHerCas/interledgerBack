@@ -1,4 +1,4 @@
-const { models } = require('../libs/sequlize');
+const { models } = require('../libs/sequelize');
 
 class AuthService {
 

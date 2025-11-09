@@ -38,8 +38,11 @@ const userSchema = {
     type_money: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    rol: {
+        type: DataTypes.STRING,
+        allowNull: false
     }
-    
 };
 
 class User extends Model {

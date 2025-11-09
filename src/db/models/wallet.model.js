@@ -1,7 +1,7 @@
 const {DataTypes, Model} = require('sequelize');
 
 const WALLET_VARIABLE = 'wallet';
-const WALLET_SCHEMA = {
+const walletSchema  = {
     id_wallet: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -43,4 +43,4 @@ class Wallet extends Model {
     }
 }
 
-module.exports = {WALLET_VARIABLE, WALLET_SCHEMA, Wallet};
+module.exports = {WALLET_VARIABLE, walletSchema, Wallet};
