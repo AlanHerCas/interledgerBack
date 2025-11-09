@@ -24,12 +24,36 @@ async function createClient() {
   const walletAddressUrl = process.env.client;
   const keyId = process.env.key_id;
   const privateKeyPath = getPrivateKeyPath();
-  if (!fs.existsSync(privateKeyPath)) {
-    throw new Error(`private.key not found at ${privateKeyPath}`);
+  // Support multiple private key sources:
+  // 1) process.env.private_key containing a PEM string
+  // 2) process.env.private_key containing a base64/raw key which we convert to PEM
+  // 3) a file at ./private.key (resolved by getPrivateKeyPath)
+  const envKey = process.env.private_key;
+  let privateKeyOption;
+
+  if (envKey) {
+    // If env contains PEM headers, use it directly
+    if (envKey.includes('-----BEGIN')) {
+      console.log('Using private key from environment (PEM)');
+      privateKeyOption = envKey;
+    } else {
+      // Assume it's a base64-like single-line key; wrap to PEM format
+      console.log('Converting private_key from .env to PEM format');
+      const cleaned = envKey.replace(/\r|\n|\s+/g, '');
+      const chunks = cleaned.match(/.{1,64}/g) || [cleaned];
+      privateKeyOption = `-----BEGIN PRIVATE KEY-----\n${chunks.join('\n')}\n-----END PRIVATE KEY-----`;
+    }
+  } else if (fs.existsSync(privateKeyPath)) {
+    console.log('Using private.key file at', privateKeyPath);
+    privateKeyOption = privateKeyPath;
+  } else {
+    throw new Error(`private.key not found at ${privateKeyPath} and process.env.private_key is not set`);
   }
+
+  // Create authenticated client using either a PEM string or a path
   return await createAuthenticatedClient({
     walletAddressUrl,
-    privateKey: privateKeyPath,
+    privateKey: privateKeyOption,
     keyId
   });
 }
@@ -86,13 +110,37 @@ async function getWalletAddresses(req, res) {
 // POST /api/interledger/incoming-payments
 async function createIncomingPayment(req, res) {
   try {
-    const { grantId, walletAddress, amount } = req.body;
+    const { grantId, walletAddress, amount, incomingAmount } = req.body;
     const grant = store.grants[grantId];
     if (!grant) return res.status(404).json({ error: 'grant not found' });
     const client = await createClient();
+    // Determine the incoming amount value. Accept either:
+    // - incomingAmount: { value: '123', assetCode, assetScale }
+    // - amount: numeric (e.g. 100)
+    let valueStr;
+    if (incomingAmount && typeof incomingAmount.value !== 'undefined') {
+      // If incomingAmount.value provided, accept only digits string
+      if (typeof incomingAmount.value !== 'string' || !/^[0-9]+$/.test(incomingAmount.value)) {
+        return res.status(400).json({ error: 'incomingAmount.value must be a string of digits (uint64)' });
+      }
+      valueStr = incomingAmount.value;
+    } else if (typeof amount !== 'undefined') {
+      // Accept number or numeric string
+      if (typeof amount === 'number') {
+        if (!Number.isInteger(amount) || amount < 0) return res.status(400).json({ error: 'amount must be a non-negative integer' });
+        valueStr = String(amount);
+      } else if (typeof amount === 'string' && /^[0-9]+$/.test(amount)) {
+        valueStr = amount;
+      } else {
+        return res.status(400).json({ error: 'amount must be an integer or numeric string' });
+      }
+    } else {
+      valueStr = '100';
+    }
+
     const incoming = await client.incomingPayment.create({ url: walletAddress.resourceServer, accessToken: grant.access_token.value }, {
       walletAddress: walletAddress.id,
-      incomingAmount: { assetCode: walletAddress.assetCode, assetScale: walletAddress.assetScale, value: String(amount || 100) }
+      incomingAmount: { assetCode: walletAddress.assetCode, assetScale: walletAddress.assetScale, value: valueStr }
     });
     const id = makeId('ip_');
     store.incomingPayments[id] = incoming;
@@ -181,7 +229,7 @@ async function createOutgoingPayment(req, res) {
     const client = await createClient();
     const payment = await client.outgoingPayment.create({ url: sendingWallet.resourceServer, accessToken: grant.access_token.value }, {
       walletAddress: sendingWallet.id,
-      quoteUrl
+      quoteId: quoteUrl
     });
     const id = makeId('op_');
     store.outgoingPayments[id] = payment;
