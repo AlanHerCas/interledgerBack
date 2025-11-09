@@ -17,5 +17,7 @@ router.get('/incoming-payments', controller.listIncomingPayments);
 
 // Wallet helper
 router.get('/wallets', controller.getWalletAddresses);
+// Run full interledger service script (runs src/services/interledger.service.js)
+router.post('/run-service', controller.runInterledgerService);
 
 module.exports = router;

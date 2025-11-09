@@ -80,18 +80,27 @@ const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la 
 
     // Si no se pudo obtener ningún permiso, mostrar error
     if (!incomingPaymentGrant) {
-        throw lastError;
+        // Inform about the failure and exit cleanly so the runner can capture details
+        console.error(JSON.stringify({ status: 'error', stage: 'incoming_grant_request', message: String(lastError?.message || lastError) }));
+        process.exit(1);
     }
 
     // Verificar que el permiso esté finalizado (ya autorizado)
     if (!isFinalizedGrant(incomingPaymentGrant)) {
-        throw new Error('Esperando confirmación de pago.');
+        // Instead of throwing, print a JSON status and exit successfully so the controller can surface it
+        console.log(JSON.stringify({ status: 'awaiting_confirmation', stage: 'incoming_grant', message: 'Esperando confirmación de pago.' }));
+        process.exit(0);
     }
 
     console.log('Permiso (grant) para pago entrante obtenido:', incomingPaymentGrant);
 
 
     // ==== 4️⃣ CREAR UN PAGO ENTRANTE (INCOMING PAYMENT) PARA EL RECEPTOR ====
+    // Allow overriding incoming amount via env var INCOMING_AMOUNT (digits-only string)
+    const incomingAmountValue = (process.env.INCOMING_AMOUNT && /^[0-9]+$/.test(process.env.INCOMING_AMOUNT))
+        ? process.env.INCOMING_AMOUNT
+        : '50000';
+
     const incomingPayment = await client.incomingPayment.create({
         url: receiverWalletAddress.resourceServer,                 // Servidor de recursos del receptor
         accessToken: incomingPaymentGrant.access_token.value,      // Token de acceso autorizado
@@ -100,7 +109,7 @@ const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la 
         incomingAmount:{
             assetCode: receiverWalletAddress.assetCode,            // Código del activo (por ej. USD)
             assetScale: receiverWalletAddress.assetScale,          // Escala del activo
-            value: '200',                                          // Monto máximo permitido (en entero)
+            value: incomingAmountValue,                            // Monto máximo permitido (en entero)
         },
     });
     console.log('Pago entrante creado:', incomingPayment);
@@ -122,7 +131,8 @@ const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la 
 
     // Verificar que la autorización esté completa
     if (!isFinalizedGrant(quoteGrant)) {
-        throw new Error('Esperando confirmación de cotización.');
+        console.log(JSON.stringify({ status: 'awaiting_confirmation', stage: 'quote_grant', message: 'Esperando confirmación de cotización.' }));
+        process.exit(0);
     }
     console.log('Permiso (grant) para cotización obtenido:', quoteGrant);
 
@@ -161,9 +171,9 @@ const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la 
 
 
     // ==== 8️⃣ INTERACCIÓN (AUTO) ====
-    // Esperar automáticamente 10 segundos antes de continuar (simula aprobación automática)
-    console.log('Esperando 10 segundos antes de intentar continuar el grant automáticamente...');
-    await new Promise((resolve) => setTimeout(resolve, 50000));
+    // Esperar automáticamente 15 segundos antes de continuar (simula aprobación automática)
+    console.log('Esperando 15 segundos antes de intentar continuar el grant automáticamente...');
+    await new Promise((resolve) => setTimeout(resolve, 15000));
 
 
     // ==== 9️⃣ FINALIZAR EL GRANT DEL PAGO SALIENTE ====
@@ -173,7 +183,8 @@ const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la 
     });
 
     if (!isFinalizedGrant(finalizedOutgoingPaymentGrant)) {
-        throw new Error('Esperando confirmación de pago saliente.');
+        console.log(JSON.stringify({ status: 'awaiting_confirmation', stage: 'outgoing_grant', message: 'Esperando confirmación de pago saliente.' }));
+        process.exit(0);
     }
 
 

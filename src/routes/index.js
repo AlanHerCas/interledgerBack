@@ -2,7 +2,6 @@ const express = require('express');
 const authRouter = require('./auth.routes');
 const interledgerRouter = require('./interledger.routes');
 const businessRouter = require('./business.routes');
-const inter = require('./inter.routes');
 
 function routerApi(app) {
     const router = express.Router();
@@ -10,7 +9,6 @@ function routerApi(app) {
     router.use('/auth', authRouter);
     router.use('/business', businessRouter);
     router.use('/interledger', interledgerRouter);
-    router.use('/inter', inter);
 }
 
 module.exports = routerApi;
