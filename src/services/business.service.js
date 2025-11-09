@@ -8,20 +8,23 @@ class BusinessService {
         return businessCreated;
     }
 
-    async findAll () {
-        const businesses = await models.Business.findAll();
-        console.log (businesses);
-        return businesses;
-    }
-
-    async findById (id) {
-        const business = await models.Business.findOne({ 
-            where: {
-                id_business: id
-            }
-        });
-        console.log (business);
-        return business;
+    async findByUserId(id_user) {
+        try {
+            const businesses = await models.Business.findAll({
+                where: { id_user }
+    });
+            const user = await models.User.findOne({
+                where: { id_user },
+                attributes: ['id_user', 'name', 'email']
+            });
+            return {
+                user,
+                businesses
+            };
+        } catch (error) {
+            console.error('Error al buscar negocios y usuario:', error);
+            throw error;
+        }
     }
 }
 

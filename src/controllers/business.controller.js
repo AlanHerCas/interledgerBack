@@ -12,23 +12,14 @@ class BusinessController {
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }
-    async findAll (req, res) {
+    async finByUserId (req, res) {
         try{
-            const businessResults = await service.findAll();
-            res.status(200).json(businessResults);
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    }
-    async findById (req, res) {
-        try{
-            const { id } = req.params;
-            const business = await service.findById(id);
-            if (!business) {
-                return res.status(404).json({ error: 'Business not found' });
+            const { id_user } = req.params;
+            const businesses = await service.findByUserId(id_user);
+            if (businesses.length === 0) { //Verifica si esta vacio el arreglo
+                return res.status(404).json({ error: 'No businesses found for this user' });
             }
-            res.status(200).json(business);
+            res.status(200).json(businesses);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
