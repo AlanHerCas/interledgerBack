@@ -19,10 +19,10 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // ==== VARIABLES DEL ENTORNO ====
 // Estas variables deben existir en tu archivo .env
-const walletAddressUrl = process.env.client;   // URL de la wallet del cliente
-const keyId = process.env.key_id;              // ID de la clave pública
-const sender = process.env.sender;             // URL de la wallet del remitente
-const receiver = process.env.receiver;         // URL de la wallet del receptor
+const walletAddressUrl = process.env.client; // Usuario cliente hack  // URL de la wallet del cliente
+const keyId = process.env.key_id; // API KEY para EURO             // ID de la clave pública
+const sender = process.env.sender; // Uusuario de Jena            // URL de la wallet del remitente
+const receiver = process.env.receiver;    // Uusuario de Diego     // URL de la wallet del receptor
 
 
 // ==== PROCESO PRINCIPAL ====
@@ -100,7 +100,7 @@ const receiver = process.env.receiver;         // URL de la wallet del receptor
         incomingAmount:{
             assetCode: receiverWalletAddress.assetCode,            // Código del activo (por ej. USD)
             assetScale: receiverWalletAddress.assetScale,          // Escala del activo
-            value: '100',                                          // Monto máximo permitido (en entero)
+            value: '200',                                          // Monto máximo permitido (en entero)
         },
     });
     console.log('Pago entrante creado:', incomingPayment);
@@ -184,7 +184,7 @@ const receiver = process.env.receiver;         // URL de la wallet del receptor
         accessToken: finalizedOutgoingPaymentGrant.access_token.value,
     },{
         walletAddress: sendingWalletAddress.id,  // Wallet que envía
-        quoteUrl: quote.id,                      // URL de la cotización asociada
+        quoteId: quote.id,                      // ID de la cotización asociada (campo requerido por Open Payments)
     });
 
     console.log('Pago saliente creado:', outgoingPayment);
