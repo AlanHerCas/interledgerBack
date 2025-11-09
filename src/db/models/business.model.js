@@ -22,7 +22,7 @@ const businessSchema = {
         type: DataTypes.STRING,
         allowNull: true
     },
-    currencly: { //Moneda con la que opera el negocio
+    currency: { //Moneda con la que opera el negocio
         type: DataTypes.STRING,
         allowNull: true
     },
@@ -33,6 +33,10 @@ const businessSchema = {
     updated_at: { // Es para llevar el control de cuando se actualizo el negocio
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
+    },
+    id_user: { // ID del usuario propietario del negocio
+        type: DataTypes.INTEGER,
+        allowNull: false
     }
 };
 
