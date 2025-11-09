@@ -45,7 +45,7 @@ const userSchema = {
     },
     key_url: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: false
     }
 };
 
