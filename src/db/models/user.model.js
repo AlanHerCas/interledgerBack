@@ -42,6 +42,10 @@ const userSchema = {
     rol: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    key_url: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 };
 
