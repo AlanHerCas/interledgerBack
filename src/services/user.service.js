@@ -1,4 +1,4 @@
-const {models} = require('../libs/sequlize');
+const { models } = require('../libs/sequelize');
 
 class UserService {
     async create (user) {
@@ -15,6 +15,15 @@ class UserService {
         const user = await models.User.findOne({
             where: {
                 id_user: id
+            }
+        });
+        console.log (user);
+        return user;
+    }
+    async findByEmail (email) {
+        const user = await models.User.findOne({
+            where: {
+                email: email
             }
         });
         console.log (user);
